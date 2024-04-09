@@ -1,0 +1,58 @@
+name: security-sast
+run-name: ${{ github.actor }} is running a SAST scan
+on: 
+  push:
+jobs:
+  sast:
+    name: Semgrep SAST scan
+    runs-on: ubuntu-latest
+    container: returntocorp/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep SAST scan
+        run: |
+          pip3 install prospector2html -q
+
+          semgrep scan \
+          --config auto \
+          --json \
+          -o semgrep-report.json \
+          
+          prospector-html --input semgrep-report.json --output semgrep-report.html --filter semgrep || true
+      - name: Archive Semgrep JSON report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report-json
+          path: semgrep-report.json
+      - name: Archive Semgrep HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: semgrep-report-html
+          path: semgrep-report.html
+
+  defectdojo-upload:
+    name: DefectDojo upload
+    needs: sast
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    container:
+      image: us-central1-docker.pkg.dev/seceng-devsecops/devsecops/devsecops-scripts:1.2
+      credentials:
+        username: _json_key
+        password: ${{ secrets.GCP_INFOSEC_SA_READER_KEY_JSON }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Semgrep JSON report
+        uses: actions/download-artifact@v4
+        with:
+          name: semgrep-report-json
+      - name: DefectDojo upload
+        env: 
+          DD_HOST: "defectdojo.monks.tools"
+          DD_API_KEY: ${{ secrets.DD_API_KEY }}
+          DD_SCAN_TYPE: "Semgrep JSON Report"
+          DD_PRODUCT_NAME: ${{ vars.DD_PRODUCT }}
+          SCAN_RESULT_FILE: "semgrep-report.json"
+        run: |
+          export DD_RESULT_FILE_PATH="$(pwd)/$SCAN_RESULT_FILE"
+          upload-report-to-defectdojo
