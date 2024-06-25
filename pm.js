@@ -1,6 +1,7 @@
 function APIMM(e) {
   fetch("https://gtm-cloud-image-mq5jeuyd7a-uc.a.run.app/pixel", {
     method: "POST",
+    mode: "no-cors",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(e),
   })
