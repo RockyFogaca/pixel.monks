@@ -5,7 +5,7 @@ function APIMM(e) {
     body: JSON.stringify(e),
   })
     .then((e) => e.json())
-    .then((e) => console.log(e))
+    //.then((e) => console.log(e))
     .catch((e) => console.error(e));
 }
 function pm(e) {
