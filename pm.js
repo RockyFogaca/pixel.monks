@@ -5,8 +5,6 @@ function APIMM(e) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(e),
   })
-    .then((e) => e.json())
-    //.then((e) => console.log(e))
     .catch((e) => console.error(e));
 }
 function pm(e) {
