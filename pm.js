@@ -10,7 +10,7 @@ function pm(e) {
   function t() {
     let e = "abcdefghijklmnopqrstuvwxyz",
       t = e.charAt(Math.floor(Math.random() * e.length)),
-      i = Date.now().toISOString(),
+      i = Date().toISOString(),
       n = Math.random().toString(36).substr(2, 5);
     return t + "-" + i + n;
   }
