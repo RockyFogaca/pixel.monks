@@ -27,6 +27,13 @@ function pm(eventObject) {
         return sessionId;
     }
 
+    function geraPointer() {
+        var hash = geraIDUnico();
+        var Tpointer = 'P-' + hash + '-' + Date.now();
+        sessionStorage.setItem('MMhash', hash);
+        return Tpointer;
+    }
+
     function geraDeviceId() {
         var deviceId = 'DE/' + geraIDUnico() + Date.now().toString(36) + '/' + ResgataSystem();
         localStorage.setItem('MMdevice', deviceId);
