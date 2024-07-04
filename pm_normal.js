@@ -63,7 +63,7 @@ function pm(eventObject) {
 
     function Iniciar(eventObject) {
         var eventObjectLocal = {
-            timestamp: Date.now(),
+            timestamp: new Date().toISOString(),
             session_id: ResgataSessao(),
             system: ResgataSystem(),
             url: document.URL,
