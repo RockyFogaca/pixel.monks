@@ -93,7 +93,7 @@ function pm(eventObject) {
                 break;
 
             case 'click_product_list':
-                eventObjectLocal.type = 'add_product_list';
+                eventObjectLocal.type = 'click_product_list';
                 eventObjectLocal.items = eventObject.items;
                 eventObjectLocal.list = eventObject.list;
                 eventObjectLocal.index = eventObject.index;
