@@ -92,7 +92,7 @@ function pm(eventObject) {
                 APIMM(eventObjectLocal);
                 break;
 
-            case 'add_product_list':
+            case 'click_product_list':
                 eventObjectLocal.type = 'add_product_list';
                 eventObjectLocal.items = eventObject.items;
                 eventObjectLocal.list = eventObject.list;
