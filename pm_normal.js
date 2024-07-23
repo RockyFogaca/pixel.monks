@@ -62,6 +62,9 @@ function pm(eventObject) {
     }
 
     function Iniciar(eventObject) {
+        //Funções usadas para gerenciar as informações de promoções internas
+        const BANNER_DATA_MANAGER = bannerDataManager();
+
         var eventObjectLocal = {
             timestamp: new Date().toISOString(),
             session_id: ResgataSessao(),
@@ -69,7 +72,8 @@ function pm(eventObject) {
             url: document.URL,
             ref: document.referrer,
             pointer: ResgataPointer(),
-            client_id: eventObject.client_id
+            client_id: eventObject.client_id,
+            custom_element: JSON.stringify(eventObject.customElement) || '{}'
         };
 
         switch (eventObject.type) {
@@ -82,6 +86,7 @@ function pm(eventObject) {
                 eventObjectLocal.p5 = eventObject.p5;
                 eventObjectLocal.p_value = eventObject.p_value;
                 APIMM(eventObjectLocal);
+
                 break;
             
             case "form":
@@ -90,6 +95,7 @@ function pm(eventObject) {
                 eventObjectLocal.p2 = eventObject.p2;
                 eventObjectLocal.p_value = eventObject.p_value;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'click_product_list':
@@ -98,6 +104,7 @@ function pm(eventObject) {
                 eventObjectLocal.list = eventObject.list;
                 eventObjectLocal.index = eventObject.index;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'view_product_list':
@@ -106,6 +113,7 @@ function pm(eventObject) {
                 eventObjectLocal.list = eventObject.list;
                 eventObjectLocal.index = eventObject.index;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'purchase':
@@ -115,6 +123,7 @@ function pm(eventObject) {
                 eventObjectLocal.transaction_id = eventObject.transaction_id;
                 console.log(eventObjectLocal);
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'checkout':
@@ -122,28 +131,54 @@ function pm(eventObject) {
                 eventObjectLocal.items = eventObject.items;
                 eventObjectLocal.total = eventObject.total;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'remove_product':
                 eventObjectLocal.type = 'remove_product';
                 eventObjectLocal.items = eventObject.items;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'add_product':
                 eventObjectLocal.type = 'add_product';
                 eventObjectLocal.items = eventObject.items;
                 APIMM(eventObjectLocal);
+
                 break;
 
             case 'view_product':
                 eventObjectLocal.type = 'view_product';
                 eventObjectLocal.items = eventObject.items;
+
+                BANNER_DATA_MANAGER.saveViewedItem(eventObject.items, eventObjectLocal.url);
+
                 APIMM(eventObjectLocal);
+
+                break;
+                
+            case 'view_banner':
+                //TODO
+                APIMM(eventObjectLocal);
+
+                break;
+
+            case 'click_banner':
+                eventObjectLocal.type = 'click_banner';
+                eventObjectLocal.list = bannerData.promotion_name;
+                eventObjectLocal.index = bannerData.creative_slot;
+                eventObjectLocal.creative = bannerData.creative_name;
+                eventObjectLocal.customElement = JSON.stringify(eventObject.bannerData);
+
+                BANNER_DATA_MANAGER.saveSelectedBanner(eventObject.bannerData);
+
+                APIMM(eventObjectLocal);
+
                 break;
 
             case 'page_view':
-                let sessionId = ResgataSessao();
+                var sessionId = ResgataSessao();
                 if (!sessionId) {
                     sessionId = geraIDSessao();
                     var pointer = geraPointer();
@@ -154,9 +189,126 @@ function pm(eventObject) {
                 }
                 eventObjectLocal.type = "page_view";
                 APIMM(eventObjectLocal);
+
                 break;
         }
     }
 
     Iniciar(eventObject);
+}
+
+function bannerDataManager() {
+    var saveSelectedBanner = function saveSelectedBanner(promoClick) {
+        var keyLS, libLS, expiryTimestamp;
+        var promoObj, promoList, promoHref;
+        
+        
+        keyLS = promoClick.keyLS || 'MM_promotions';
+        libLS = libLocalStorage;
+        expiryTimestamp = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 dias em milissegundos
+        
+        promoObj = JSON.parse( libLS.getItem(keyLS) || '{}' );
+        //promoList = promoObj.promos || {};
+        promoURL = promoClick.promotion_url;
+        
+        promoClick['expiry'] = expiryTimestamp;
+        promoObj[promoURL].bannerData = promoClick;
+        //promoList[promoURL].bannerData = promoClick;
+        //promoObj['promos'] = promoList;
+        
+        promoObj = JSON.stringify(promoObj);
+        libLS.setItem(keyLS, promoObj);
+    }
+
+    var saveViewedItem = function saveViewedItem(itemData, pageUrl){
+        var keyLS, libLS;
+        var promoObj, promoList, itemsList;
+        
+        keyLS = 'MM_promotions';
+        libLS = libLocalStorage;
+        
+        promoObj = JSON.parse( libLS.getItem(keyLS) || '{}' );
+        //promoList = promoObj.promos || {};
+        itemsList = promoObj[pageUrl].items || {};
+        
+        if (pageUrl in promoObj == true && itemData.product_id in itemsList == false) {
+            itemsList[itemData.product_id] = itemData;
+            promoObj[pageUrl].items = itemsList;
+            
+            promoObj = JSON.stringify(promoObj);
+            libLS.setItem(keyLS, promoObj);
+        }
+    }
+
+    var bannerDataManaer = {
+        saveSelectedBanner: saveSelectedBanner,
+        saveViewedItem: saveViewedItem
+    };
+    
+    return bannerDataManaer;
+}
+
+function libLocalStorage() {
+  
+    var getItem = function getItem(key) {
+      return hasItem(key) ? localStorage.getItem(key) : undefined;
+    };
+    
+    
+    var setItem = function setItem(key, value) {
+      localStorage.setItem(key, value);
+      return hasItem(key);
+    };
+    
+    
+    var removeItem = function removeItem(key) {
+      localStorage.removeItem(key);
+      return !hasItem(key);
+    };
+    
+    
+    var hasItem = function hasItem(key) {
+      return localStorage.getItem(key) !== null;
+    };
+    
+    
+    var keys = function keys() {
+      var allKeys = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        allKeys.push(localStorage.key(i))
+      }
+      if (allKeys.length == 0) {
+        return null;
+      }
+      return allKeys;
+    };
+    
+    
+    var hasLocalStorageEnabled = function hasLocalStorageEnabled() {
+      return typeof localStorage !== 'undefined';
+    };
+    
+    
+    var removeAll = function removeAll() {
+      var allKeys = keys();
+      if (allKeys) {
+        allKeys.forEach(function(key) {
+          removeItem(key);
+        });
+      }
+      return !keys() ? true : false;
+    };
+    
+    
+    var libLocalStorage = {
+      getItem: getItem,
+      setItem: setItem,
+      removeItem: removeItem,
+      hasItem: hasItem,
+      keys: keys,
+      hasLocalStorageEnabled: hasLocalStorageEnabled,
+      removeAll: removeAll
+    };
+    
+    return libLocalStorage;
 }
