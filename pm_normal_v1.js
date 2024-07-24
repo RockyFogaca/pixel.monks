@@ -208,36 +208,35 @@ function bannerDataManager() {
         expiryTimestamp = Date.now() + (7 * 24 * 60 * 60 * 1000); // 7 dias em milissegundos
         
         promoObj = JSON.parse( libLS.getItem(keyLS) || '{}' );
-        //promoList = promoObj.promos || {};
         promoURL = promoClick.promotion_url;
         promoObj[promoURL] = promoObj[promoURL] || {};
         
         promoClick['expiry'] = expiryTimestamp;
         promoObj[promoURL].bannerData = promoClick;
-        //promoList[promoURL].bannerData = promoClick;
-        //promoObj['promos'] = promoList;
         
         promoObj = JSON.stringify(promoObj);
         libLS.setItem(keyLS, promoObj);
     }
 
-    var saveViewedItem = function saveViewedItem(itemData, pageUrl){
+    var saveViewedItem = function saveViewedItem(itemsArr, pageUrl){
         var keyLS, libLS;
-        var promoObj, promoList, itemsList;
+        var promoObj, itemsList;
         
         keyLS = 'MM_promotions';
         libLS = libLocalStorage();
         
         promoObj = JSON.parse( libLS.getItem(keyLS) || '{}' );
-        //promoList = promoObj.promos || {};
-        itemsList = promoObj[pageUrl].items || {};
         
-        if (pageUrl in promoObj == true && itemData.product_id in itemsList == false) {
-            itemsList[itemData.product_id] = itemData;
-            promoObj[pageUrl].items = itemsList;
-            
-            promoObj = JSON.stringify(promoObj);
-            libLS.setItem(keyLS, promoObj);
+        for(i in itemsArr) {
+            if (pageUrl in promoObj == true && itemsArr[i].product_id in itemsList == false) {
+                itemsList = promoObj[pageUrl].items || {};
+
+                itemsList[itemsArr[i].product_id] = itemsArr[i];
+                promoObj[pageUrl].items = itemsList;
+                
+                promoObj = JSON.stringify(promoObj);
+                libLS.setItem(keyLS, promoObj);
+            }
         }
     }
 
