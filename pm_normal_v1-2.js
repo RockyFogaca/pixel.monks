@@ -226,7 +226,7 @@ function bannerDataManager() {
         libLS = libLocalStorage();
         
         promoObj = JSON.parse( libLS.getItem(keyLS) || '{}' );
-        itemsList = promoObj[pageUrl] ? promoObj[pageUrl].items : {};
+        itemsList = promoObj[pageUrl] && promoObj[pageUrl].items ? promoObj[pageUrl].items : {};
         
         for(i in itemsArr) {
             if (pageUrl in promoObj == true && itemsArr[i].product_id in itemsList == false) {
